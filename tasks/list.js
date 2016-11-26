@@ -23,19 +23,19 @@ module.exports = ({ patternsFolder, argv }) => {
 
 
 function choosePattern(patterns, root) {
-	return inquirer.prompt([{
-		type: 'list',
-		name: 'pattern',
-		message: chalk.green('Choose a pattern'),
-		choices: patterns.map(pattern => {
-			return {
-				name: pattern.folder+(
+  return inquirer.prompt([{
+    type: 'list',
+    name: 'pattern',
+    message: chalk.green('Choose a pattern'),
+    choices: patterns.map(pattern => {
+      return {
+        name: pattern.folder+(
           pattern.description ? ' - '+pattern.description : ''
         ),
-				value: pattern.folder
-			}
-		})
-	}])
+        value: pattern.folder
+      }
+    })
+  }])
   .then(results => results.pattern)
 }
 
