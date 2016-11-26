@@ -1,6 +1,6 @@
 {
   "name": "pattern-manager",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Tool for managing code patterns",
   "main": "index.js",
   "engines" : {
@@ -24,5 +24,8 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/eliot-akira/pattern-manager.git"
-  }
+  },
+  "keywords": [
+    "code", "pattern", "manager"
+  ]
 }
