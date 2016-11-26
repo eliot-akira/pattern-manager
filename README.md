@@ -76,6 +76,7 @@ Each pattern is passed a collection of properties and utility methods.
 - [`handlebars`](https://github.com/wycats/handlebars.js) - Compile templates
 - [`shell`](https://github.com/shelljs/shelljs) - Collection of shell commands
 - [`chalk`](https://github.com/chalk/chalk) - Colorful logging
+- `error` - Display an error message and exit
 
 
 ## Basic example
