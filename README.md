@@ -5,11 +5,13 @@ Tool for managing code patterns
 
 ## Description
 
-`pattern-manager` provides a way to keep a shared (or application-specific) folder of pattern generators. It is inspired by [`plop`](https://github.com/amwmedia/plop).
+`pattern-manager` provides a way to keep a shared or application-specific folder of pattern generators.
 
 It searches for a folder named `.patterns`, in the current working folder or one of its ancestors. It can contain a number of pattern folders, each with a `pattern.js` and template files.
 
 Each pattern exports a function to handle how it is copied, for example: take user inputs, copy files and folders, and compile templates. The pattern function is passed a collection of methods to simplify the scaffolding process: [`inquirer`](https://github.com/SBoudrias/Inquirer.js),  [`handlebars`](https://github.com/wycats/handlebars.js), [`shell`](https://github.com/shelljs/shelljs), and [`chalk`](https://github.com/chalk/chalk).
+
+The tool is inspired by [`plop`](https://github.com/amwmedia/plop).
 
 ## Install
 
