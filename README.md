@@ -5,13 +5,15 @@ Tool for managing code patterns
 
 ## Description
 
-`pattern-manager` provides a way to keep a shared or application-specific folder of pattern generators.
+`pattern-manager` provides a way to manage a folder of code patterns and their generators, which can be application-specific or shared among projects.
 
-It searches for a folder named `.patterns` in the current working folder or one of its ancestors. It can contain a number of pattern folders, each with a `pattern.js` and any template files.
+It searches for a folder named `.patterns` in the current working directory or one of its ancestors. The `.patterns` folder can contain a number of pattern folders.
 
-Each pattern exports a function to handle how it is copied, for example: take user inputs, copy files and folders, and compile templates. The pattern function is passed a collection of methods to simplify the scaffolding process: [`inquirer`](https://github.com/SBoudrias/Inquirer.js),  [`handlebars`](https://github.com/wycats/handlebars.js), [`shell`](https://github.com/shelljs/shelljs), and [`chalk`](https://github.com/chalk/chalk).
+Each pattern is responsible to creating a copy of itself, for example: get options from the command-line or user inputs; copy files and folders; and compile templates.
 
-The tool is inspired by [`plop`](https://github.com/amwmedia/plop).
+A pattern folder should contain a `pattern.js`, which exports a generator function, and any template files. To simplify the scaffolding process, the generator function is provided with a set of utilities: [`inquirer`](https://github.com/SBoudrias/Inquirer.js),  [`handlebars`](https://github.com/wycats/handlebars.js), [`shell`](https://github.com/shelljs/shelljs), and [`chalk`](https://github.com/chalk/chalk).
+
+This tool is inspired by [`plop`](https://github.com/amwmedia/plop).
 
 ## Install
 
@@ -33,7 +35,7 @@ npm install pattern-manager -D
 pat
 ```
 
-It searches for a `.patterns` folder, displays a list of patterns to choose from, and runs it.
+It searches for a `.patterns` folder, displays a list of patterns, and runs the selected pattern.
 
 ```bash
 pat [pattern name] [...pattern options]
@@ -43,17 +45,21 @@ If a pattern name is specified, it runs that pattern.
 
 ## Pattern
 
-In the `.patterns` folder, there can be one or more pattern folders.
+In the `.patterns` folder, there can be one or more pattern folders. These can be nested.
 
-- Each pattern is named after its folder.
-- Each pattern folder contains `pattern.js`
+- Each pattern is named after its folder
+  - This includes the relative path, for example: `react/state`
+- Each pattern folder contains `pattern.js` and any template files
+  - Any folder that doesn't have `pattern.js` will be ignored
 
-The job of `pattern.js` is to create a copy of the pattern to its destination. It should export a function that receives a config object.
+The job of `pattern.js` is to create a copy of the pattern to its destination. It should export a generator function that receives a config object.
 
 ```js
 function pattern(config) {
 
-  // Do stuff here
+  const { src, dest } = config
+
+  // Create new pattern here
 
 }
 
@@ -62,12 +68,12 @@ pattern.description = 'Desciption of pattern'
 module.exports = pattern
 ```
 
-If you add a `description` property to the function, it will be displayed when selecting patterns.
+If the function has a `description` property, it will be displayed when selecting patterns.
 
 
 #### Config object
 
-Each pattern is passed a collection of properties and utility methods.
+The generator function is provided with a set of properties and utility methods.
 
 - `src` - Source path: the path of the pattern folder
 - `dest` - Destination path: current working folder
@@ -77,7 +83,6 @@ Each pattern is passed a collection of properties and utility methods.
 - [`shell`](https://github.com/shelljs/shelljs) - Collection of shell commands
 - [`chalk`](https://github.com/chalk/chalk) - Colorful logging
 - `error` - Display an error message and exit
-
 
 ## Basic example
 
@@ -96,7 +101,11 @@ function pattern(config) {
 
   const { src, dest, inquirer, handlebars, shell, error } = config
 
-  inquirer.prompt([{
+  const { prompt } = inquirer
+  const { compile } = handlebars
+  const { mkdir } = shell
+
+  prompt([{
     type: 'input',
     name: 'name',
     default: 'app',
@@ -115,13 +124,13 @@ function pattern(config) {
   .then(({ name, message }) => {
 
     const srcFile = path.join(src, 'example.js')
+    const template = fs.readFileSync(srcFile, 'utf8')
+    const content = compile(template)({ message })
+
     const destPath = path.join(dest, name)
     const destFile = path.join(destPath, 'example.js')
 
-    const template = fs.readFileSync(srcFile, 'utf8')
-    const content = handlebars.compile(template)({ message })
-
-    shell.mkdir('-p', destPath)
+    mkdir('-p', destPath)
 
     fs.writeFileSync(destFile, content)
 
@@ -152,6 +161,7 @@ The following is an advanced example of `pattern.js`.
 - If the destination exists, display error and quit
 - Copy all files in the pattern folder to its destination, using `rsync`
 - Replace name and description in `package.json`
+- Finally, it asks to run `npm install`
 
 If `--dry` is passed in the command line, it will do a dry run without copying anything.
 
@@ -164,7 +174,9 @@ function pattern(config) {
 
   const { src, dest, argv, inquirer, error } = config
 
-  inquirer.prompt([{
+  const { prompt } = inquirer
+
+  prompt([{
     type: 'input',
     name: 'name',
     default: 'app',
@@ -211,6 +223,23 @@ function pattern(config) {
     data.description = description
 
     fs.writeFileSync(packagePath, JSON.stringify(data, null, 2))
+
+  })
+
+  .then(() => {
+
+    // ------------ npm install ------------
+
+    return prompt([{
+      type: 'confirm', name: 'install', default: false, message: 'Install NPM modules?'
+    }])
+
+    .then(({ install }) => {
+
+      if (!install || argv.dry) return
+
+      spawnSync('npm', ['install'], { stdio: 'inherit', cwd: dest })
+    })
 
   })
 

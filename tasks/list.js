@@ -4,7 +4,7 @@ const chalk = require('chalk')
 const inquirer = require('inquirer')
 const runPattern = require('./run')
 
-module.exports = ({ patternsFolder, argv }) => {
+module.exports = ({ patternsFolder }) => {
 
   // List folders in .patterns
 
@@ -18,7 +18,7 @@ module.exports = ({ patternsFolder, argv }) => {
     })
 
   choosePattern(patterns, patternsFolder)
-  .then(pattern => runPattern({ patternsFolder, pattern, argv }))
+  .then(pattern => runPattern({ patternsFolder, pattern }))
 }
 
 
@@ -40,7 +40,7 @@ function choosePattern(patterns, root) {
 }
 
 
-const exclude = ['.git', 'node_modules']
+const exclude = ['.git', 'node_modules', '_unused']
 
 function getAllPatternFolders(dir) {
 
