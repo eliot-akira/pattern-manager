@@ -49,7 +49,7 @@ In the `.patterns` folder, there can be one or more pattern folders.
 The job of `pattern.js` is to create a copy of the pattern to its destination. It should export a function that receives a config object.
 
 ```js
-function pattern(config) => {
+function pattern(config) {
 
   // Do stuff here
 
@@ -59,6 +59,8 @@ pattern.description = 'Desciption of pattern'
 
 module.exports = pattern
 ```
+
+If you add a `description` property to the function, it will be displayed when selecting patterns.
 
 Common tasks of a pattern include:
 
