@@ -62,12 +62,6 @@ module.exports = pattern
 
 If you add a `description` property to the function, it will be displayed when selecting patterns.
 
-Common tasks of a pattern include:
-
-- Take options from input
-- Copy files and folders
-- Search & replace constants in templates
-
 
 #### Config object
 
@@ -81,9 +75,75 @@ Each pattern is passed a collection of properties and utility methods.
 - [`shell`](https://github.com/shelljs/shelljs) - Collection of shell commands
 - [`chalk`](https://github.com/chalk/chalk) - Colorful logging
 
-## Example
 
-The following is an example `pattern.js`.
+## Basic example
+
+The following is a basic example of `pattern.js`.
+
+- Get app name and message using `inquirer`
+- Compile a template with `handlebars`
+- Create app folder with `shell.mkdir`
+- Write rendered template
+
+```js
+const fs = require('fs')
+const path = require('path')
+
+function pattern(config) {
+
+  const { src, dest, inquirer, handlebars, shell, error } = config
+
+  inquirer.prompt([{
+    type: 'input',
+    name: 'name',
+    default: 'app',
+    message: 'Name of app',
+    validate: function (value) {
+      if (value) return true
+      return 'App name is required'
+    }
+  }, {
+    type: 'input',
+    name: 'message',
+    default: 'Hello, world',
+    message: 'Message to display'
+  }])
+
+  .then(({ name, message }) => {
+
+    const srcFile = path.join(src, 'example.js')
+    const destPath = path.join(dest, name)
+    const destFile = path.join(destPath, 'example.js')
+
+    const template = fs.readFileSync(srcFile, 'utf8')
+    const content = handlebars.compile(template)({ message })
+
+    shell.mkdir('-p', destPath)
+
+    fs.writeFileSync(destFile, content)
+
+    return destFile
+  })
+
+  .then(file => console.log(`Wrote to ${file}`))
+
+  .catch(e => error(e.stack))
+}
+
+pattern.description = 'Basic pattern'
+
+module.exports = pattern
+```
+
+The `example.js` template:
+
+```js
+console.log('{{message}}')
+```
+
+## Advanced example
+
+The following is an advanced example of `pattern.js`.
 
 - Take user input for the app name and description
 - If the destination exists, display error and quit
@@ -116,6 +176,7 @@ function pattern(config) {
     default: '',
     message: 'Description'
   }])
+
   .then(({ name, description }) => {
 
     const finalDest = path.join(dest, name)
@@ -149,9 +210,12 @@ function pattern(config) {
     fs.writeFileSync(packagePath, JSON.stringify(data, null, 2))
 
   })
+
+  .catch(e => error(e.stack))
+
 }
 
-pattern.description = 'Example pattern'
+pattern.description = 'Advanced pattern'
 
 module.exports = pattern
 ```
