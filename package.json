@@ -1,0 +1,28 @@
+{
+  "name": "pattern-manager",
+  "version": "0.0.1",
+  "description": "Tool for managing code patterns",
+  "main": "index.js",
+  "engines" : {
+    "node" : ">=6.0.0"
+  },
+  "bin": {
+    "pat": "bin/pat"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^1.1.3",
+    "findup-sync": "^0.4.3",
+    "handlebars": "^4.0.6",
+    "inquirer": "^1.2.3",
+    "minimist": "^1.2.0",
+    "shelljs": "^0.7.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eliot-akira/pattern-manager.git"
+  }
+}
