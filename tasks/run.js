@@ -1,13 +1,8 @@
 const fs = require('fs')
 const path = require('path')
-const { spawnSync } = require('child_process')
-const chalk = require('chalk')
-const inquirer = require('inquirer')
-const handlebars = require('handlebars')
-const shell = require('shelljs')
-const confirm = require('../utils/confirm')
 const error = require('../utils/error')
 const resolveSeries = require('../utils/resolveSeries')
+const shortcuts = require('../utils/shortcuts')
 
 module.exports = function runPatternFromFolder({ patternsPath, pattern }) {
 
@@ -22,48 +17,26 @@ module.exports = function runPatternFromFolder({ patternsPath, pattern }) {
 
 function runPattern(patternFile, config = {}) {
 
-  let src = '', patternCallback
+  let src = ''
+  let patternCallback = patternFile
 
   if (typeof patternFile === 'string') {
     src = path.dirname(patternFile)
     patternCallback = require(patternFile)
-  } else {
-    patternCallback = patternFile
   }
 
   let patternConfig = Object.assign({
     src,
     dest: process.cwd(),
     argv: require('minimist')(process.argv.slice(2)),
-    inquirer,
-    handlebars,
-    shell,
-    chalk,
-
-    // Shortcuts
-    prompt: inquirer.prompt,
-    compile: handlebars.compile,
-    confirm,
-    quit: () => { throw false },
-    error,
-
-    // Run command synchronously, streaming output
-    command: (name, args, options = {}) =>
-      spawnSync(name, args, Object.assign({
-        stdio: 'inherit'
-      }, options))
-    ,
-
-    writeJsonFile: (filePath, data) =>
-      fs.writeFileSync(filePath, JSON.stringify(data, null, 2))
-    ,
 
     // Method for a pattern to run other patterns
     runPattern: (nextFile, nextConfig = {}) =>
       runPattern(nextFile,
         Object.assign({}, patternConfig, nextConfig)
       )
-  }, config)
+
+  }, shortcuts, config)
 
   // Pattern can return an array of functions,
   // which will be run as a series of promises

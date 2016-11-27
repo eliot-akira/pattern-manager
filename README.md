@@ -87,13 +87,17 @@ Shortcuts
 
 - `prompt` - Shortcut for `inquirer.prompt`
 - `compile` - Shortcut for `handlebars.compile`
+- `compileFile` - Compile a template file and write to another file
+  - Arguments: input file path, data object, output file path
 - `error` - Display an error message and exit
 - `confirm` - Ask for confirmation then return true/false
   - Arguments: a message and optional default value (default: true)
 - `command` - Shortcut for [`child_process.spawnSync`](https://nodejs.org/api/child_process.html#child_process_child_process_spawnsync_command_args_options) with streaming output (stdio: inherit)
-  - Arguments: command to run, array of arguments, options object
+  - Arguments: command to run, array of arguments, spawnSync options
+- `readFile` - Shortcut for `fs.readFileSync` with `utf8` encoding
+- `writeFile` - Shortcut for `fs.writeFileSync`
 - `writeJsonFile` - Write object to human-readable JSON file
-  - Arguments: a file path and object
+  - Arguments: file path, data object
 
 #### Series of promises
 
@@ -103,10 +107,8 @@ If the pattern generator function returns an array of functions, they will be ru
 
 The following is a basic example of `pattern.js`.
 
-- Get app name and message
-- Compile a template
-- Create app folder
-- Write rendered template
+- Get user input
+- Compile a template and copy it to current folder
 
 ```js
 const fs = require('fs')
@@ -114,44 +116,27 @@ const path = require('path')
 
 function pattern(config) {
 
-  const { src, dest, prompt, compile, shell, error } = config
+  const { src, dest, prompt, compileFile, shell, error } = config
 
   const { mkdir } = shell
 
   return [
     () => prompt([
       {
-        name: 'name', default: 'app',
-        message: 'Name of app',
-        validate: function (value) {
-          if (value) return true
-          return 'App name is required'
-        }
-      },
-      {
         name: 'message', default: 'Hello, world',
         message: 'Message to display'
       }
     ]),
 
-    ({ name, message }) => {
+    data => {
 
       const srcFile = path.join(src, 'example.js')
-      const template = fs.readFileSync(srcFile, 'utf8')
+      const destFile = path.join(dest, 'example.js')
 
-      const content = compile(template)({ message })
+      compileFile(srcFile, data, destFile)
 
-      const destPath = path.join(dest, name)
-      const destFile = path.join(destPath, 'example.js')
-
-      mkdir('-p', destPath)
-
-      fs.writeFileSync(destFile, content)
-
-      return destFile
-    },
-
-    file => console.log(`Wrote to ${file}`)
+      console.log(`Wrote to ${destFile}`)
+    }
   ]
 }
 
