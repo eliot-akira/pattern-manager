@@ -4,21 +4,21 @@ const chalk = require('chalk')
 const inquirer = require('inquirer')
 const runPattern = require('./run')
 
-module.exports = ({ patternsFolder }) => {
+module.exports = ({ patternsPath }) => {
 
   // List folders in .patterns
 
-  console.log(chalk.green('Available patterns in'), patternsFolder)
+  console.log(chalk.green('Available patterns in'), patternsPath)
 
-  const patterns = getAllPatternFolders(patternsFolder)
+  const patterns = getAllPatternFolders(patternsPath)
     .map(pattern => {
       // Trim pattern folder name to relative
-      pattern.folder = path.relative(patternsFolder, pattern.folder)
+      pattern.folder = path.relative(patternsPath, pattern.folder)
       return pattern
     })
 
-  choosePattern(patterns, patternsFolder)
-  .then(pattern => runPattern({ patternsFolder, pattern }))
+  choosePattern(patterns, patternsPath)
+  .then(pattern => runPattern({ patternsPath, pattern }))
 }
 
 

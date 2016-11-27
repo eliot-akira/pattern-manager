@@ -82,15 +82,30 @@ The pattern generator function is provided with a set of properties and utility 
 - [`handlebars`](https://github.com/wycats/handlebars.js) - Compile templates
 - [`shell`](https://github.com/shelljs/shelljs) - Collection of shell commands
 - [`chalk`](https://github.com/chalk/chalk) - Colorful logging
+
+Shortcuts
+
+- `prompt` - Shortcut for `inquirer.prompt`
+- `compile` - Shortcut for `handlebars.compile`
 - `error` - Display an error message and exit
+- `confirm` - Ask for confirmation then return true/false
+  - Arguments: a message and optional default value (default: true)
+- `command` - Shortcut for [`child_process.spawnSync`](https://nodejs.org/api/child_process.html#child_process_child_process_spawnsync_command_args_options) with streaming output (stdio: inherit)
+  - Arguments: command to run, array of arguments, options object
+- `writeJsonFile` - Write object to human-readble JSON file
+  - Arguments: a file path and object
+
+#### Series of promises
+
+If the pattern generator function returns an array of functions, they will be run as a series of promises.
 
 ## Basic example
 
 The following is a basic example of `pattern.js`.
 
-- Get app name and message using `inquirer.prompt`
-- Compile a template with `handlebars.compile`
-- Create app folder with `shell.mkdir`
+- Get app name and message
+- Compile a template
+- Create app folder
 - Write rendered template
 
 ```js
@@ -99,44 +114,45 @@ const path = require('path')
 
 function pattern(config) {
 
-  const { src, dest, inquirer, handlebars, shell, error } = config
+  const { src, dest, prompt, compile, shell, error } = config
 
-  inquirer.prompt([{
-    type: 'input',
-    name: 'name',
-    default: 'app',
-    message: 'Name of app',
-    validate: function (value) {
-      if (value) return true
-      return 'App name is required'
-    }
-  }, {
-    type: 'input',
-    name: 'message',
-    default: 'Hello, world',
-    message: 'Message to display'
-  }])
+  const { mkdir } = shell
 
-  .then(({ name, message }) => {
+  return [
+    () => prompt([
+      {
+        name: 'name', default: 'app',
+        message: 'Name of app',
+        validate: function (value) {
+          if (value) return true
+          return 'App name is required'
+        }
+      },
+      {
+        name: 'message', default: 'Hello, world',
+        message: 'Message to display'
+      }
+    ]),
 
-    const srcFile = path.join(src, 'example.js')
-    const template = fs.readFileSync(srcFile, 'utf8')
+    ({ name, message }) => {
 
-    const content = handlebars.compile(template)({ message })
+      const srcFile = path.join(src, 'example.js')
+      const template = fs.readFileSync(srcFile, 'utf8')
 
-    const destPath = path.join(dest, name)
-    const destFile = path.join(destPath, 'example.js')
+      const content = compile(template)({ message })
 
-    shell.mkdir('-p', destPath)
+      const destPath = path.join(dest, name)
+      const destFile = path.join(destPath, 'example.js')
 
-    fs.writeFileSync(destFile, content)
+      mkdir('-p', destPath)
 
-    return destFile
-  })
+      fs.writeFileSync(destFile, content)
 
-  .then(file => console.log(`Wrote to ${file}`))
+      return destFile
+    },
 
-  .catch(e => error(e.stack))
+    file => console.log(`Wrote to ${file}`)
+  ]
 }
 
 pattern.description = 'Basic pattern'
@@ -158,88 +174,89 @@ The following is an advanced example of `pattern.js`.
 - If the destination exists, display error and quit
 - Copy all files in the pattern folder to its destination, using `rsync`
 - Replace name and description in `package.json`
-- Finally, it asks to run `npm install`
+- Finally, it confirms to run `git init` and `npm install`
 
 If `--dry` is passed in the command line, it will do a dry run without copying anything.
 
 ```js
 const fs = require('fs')
 const path = require('path')
-const { spawnSync } = require('child_process')
 
 function pattern(config) {
 
-  const { src, dest, argv, inquirer, error } = config
+  const {
+    src, dest, argv, prompt, error, writeJsonFile
+  } = config
 
-  inquirer.prompt([{
-    type: 'input',
-    name: 'name',
-    default: 'app',
-    message: 'Name of app',
-    validate: function (value) {
-      if (value) return true
-      return 'App name is required'
-    }
-  }, {
-    type: 'input',
-    name: 'description',
-    default: '',
-    message: 'Description'
-  }])
+  let name, destPath
 
-  .then(({ name, description }) => {
+  return [
+    () => prompt([
+      {
+        name: 'name', default: 'app',
+        message: 'Name of app',
+        validate: function (value) {
+          if (value) return true
+          return 'App name is required'
+        }
+      },
+      {
+        name: 'description', default: '',
+        message: 'Description'
+      }
+    ]),
 
-    const finalDest = path.join(dest, name)
+    data => {
 
-    if (fs.existsSync(finalDest)) {
-      return error(`Destination "${name}" already exists`)
-    }
+      name = data.name
+      destPath = path.join(dest, name)
+      const { description } = data
 
-    // ------------ Copy pattern ------------
+      if (fs.existsSync(destPath)) {
+        return error(`Destination "${name}" already exists`)
+      }
 
-    spawnSync('rsync', [
-      '-vrlptz'+(argv.dry ? 'n' : ''), // -n for dry run
-      '--delete',
-      '--exclude', '.git',
-      '--exclude', '/pattern.js', // Exclude this file
-      '--filter', ':- .gitignore',
-      '.', // Source
-      finalDest
-    ], { stdio: 'inherit', cwd: __dirname })
+      // ------------ Copy pattern ------------
 
-    if (argv.dry) return
+      command('rsync', [
+        '-vrlptz'+(argv.dry ? 'n' : ''), // -n for dry run
+        '--delete',
+        '--exclude', '.git',
+        '--exclude', '/pattern.js', // Exclude this file
+        '--filter', ':- .gitignore',
+        '.', // Source
+        destPath
+      ], { cwd: __dirname })
 
-    // ------------ Search & replace ------------
+      if (argv.dry) quit()
 
-    const packagePath = path.join(finalDest, 'package.json')
-    let data = require(packagePath)
+      // ------------ Search & replace ------------
 
-    data.name = name
-    data.description = description
+      const packagePath = path.join(destPath, 'package.json')
+      let packageData = require(packagePath)
 
-    fs.writeFileSync(packagePath, JSON.stringify(data, null, 2))
+      packageData.name = name
+      packageData.description = description
 
-  })
+      writeJsonFile(packagePath, packageData)
+    },
 
-  .then(() => {
+    // ------------ Git init ------------
+
+    () => confirm('Init .git repo?').then(confirmed => {
+      if (!confirmed) return
+      command('git', ['init'], { cwd: destPath })
+    }),
 
     // ------------ npm install ------------
 
-    return inquirer.prompt([{
-      type: 'confirm', name: 'install', default: false, message: 'Install NPM modules?'
-    }])
+    () => confirm('Install NPM packages?').then(confirmed => {
+      if (!confirmed) return
+      command('npm', ['install'], { cwd: destPath })
+    }),
 
-    .then(({ install }) => {
-
-      if (!install || argv.dry) return
-
-      spawnSync('npm', ['install'], { stdio: 'inherit', cwd: dest })
-    })
-
-  })
-
-  .catch(e => error(e.stack))
-
+    () => log(green(`Created "${name}"`))
+  ]
 }
 
 pattern.description = 'Advanced pattern'

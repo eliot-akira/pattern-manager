@@ -11,24 +11,16 @@ const error = require('./utils/error')
 
 const pattern = argv._[0]
 
-// ------------ Find .patterns folder ------------
+// Find .patterns folder
 
-const patternsFolder = findup('.patterns')
+const patternsPath = findup('.patterns')
 
-if (!patternsFolder) {
+if (!patternsPath) {
   error('.patterns folder not found in current or ancestor folders')
 }
 
-// ------------ No pattern specified ------------
-
 if (!pattern) {
-
-  tasks.list({ patternsFolder, argv })
-
+  tasks.list({ patternsPath, argv })
 } else {
-
-// ------------ Run pattern ------------
-
-  tasks.run({ patternsFolder, pattern, argv })
-
+  tasks.run({ patternsPath, pattern, argv })
 }
