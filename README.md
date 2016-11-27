@@ -92,7 +92,7 @@ Shortcuts
   - Arguments: a message and optional default value (default: true)
 - `command` - Shortcut for [`child_process.spawnSync`](https://nodejs.org/api/child_process.html#child_process_child_process_spawnsync_command_args_options) with streaming output (stdio: inherit)
   - Arguments: command to run, array of arguments, options object
-- `writeJsonFile` - Write object to human-readble JSON file
+- `writeJsonFile` - Write object to human-readable JSON file
   - Arguments: a file path and object
 
 #### Series of promises
