@@ -94,6 +94,7 @@ Shortcuts
   - Arguments: a message and optional default value (default: true)
 - `command` - Shortcut for [`child_process.spawnSync`](https://nodejs.org/api/child_process.html#child_process_child_process_spawnsync_command_args_options) with streaming output (stdio: inherit)
   - Arguments: command to run, array of arguments, spawnSync options
+- `fileExists` - Shortcut for `fs.existsSync`
 - `readFile` - Shortcut for `fs.readFileSync` with `utf8` encoding
 - `writeFile` - Shortcut for `fs.writeFileSync`
 - `writeJsonFile` - Write object to human-readable JSON file
@@ -111,12 +112,11 @@ The following is a basic example of `pattern.js`.
 - Compile a template and copy it to current folder
 
 ```js
-const fs = require('fs')
 const path = require('path')
 
 function pattern(config) {
 
-  const { src, dest, prompt, compileFile, shell, error } = config
+  const { src, dest, prompt, compileFile } = config
 
   const { mkdir } = shell
 
@@ -165,13 +165,13 @@ The following is an advanced example of `pattern.js`.
 If `--dry` is passed in the command line, it will do a dry run without copying anything.
 
 ```js
-const fs = require('fs')
 const path = require('path')
 
 function pattern(config) {
 
   const {
-    src, dest, argv, prompt, error, chalk, writeJsonFile, quit
+    src, dest, argv, prompt, error, chalk,
+    writeJsonFile, fileExists, quit
   } = config
 
   let name, destPath
@@ -195,7 +195,7 @@ function pattern(config) {
       destPath = path.join(dest, name)
       const { description } = data
 
-      if (fs.existsSync(destPath)) {
+      if (fileExists(destPath)) {
         return error(`Destination "${name}" already exists`)
       }
 

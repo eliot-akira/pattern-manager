@@ -19,6 +19,7 @@ module.exports = {
   confirm,
   quit: () => { throw false },
   error,
+  fileExists: fs.existsSync,
 
   // Run command synchronously, streaming output
   command: (name, args, options = {}) =>
