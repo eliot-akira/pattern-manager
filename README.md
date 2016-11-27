@@ -185,7 +185,7 @@ const path = require('path')
 function pattern(config) {
 
   const {
-    src, dest, argv, prompt, error, writeJsonFile
+    src, dest, argv, prompt, error, chalk, writeJsonFile
   } = config
 
   let name, destPath
@@ -255,7 +255,7 @@ function pattern(config) {
       command('npm', ['install'], { cwd: destPath })
     }),
 
-    () => log(green(`Created "${name}"`))
+    () => console.log(chalk.green(`Created "${name}"`))
   ]
 }
 
