@@ -52,9 +52,9 @@ function getAllPatternFolders(dir) {
 
     file = path.join(dir, file)
 
-    const stat = fs.statSync(file)
+    const stat = fs.lstatSync(file)
 
-    if (!stat || !stat.isDirectory()) return
+    if (!stat || !stat.isDirectory() || stat.isSymbolicLink()) return
 
     const patternFile = path.join(file, 'pattern.js')
 
