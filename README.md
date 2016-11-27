@@ -9,9 +9,9 @@ Tool for managing code patterns
 
 It searches for a folder named `.patterns` in the current working directory or one of its ancestors. The `.patterns` folder can contain a number of pattern folders.
 
-Each pattern is responsible to creating a copy of itself, for example: get options from the command-line or user inputs; copy files and folders; and compile templates.
+A pattern folder should contain a `pattern.js`, which exports a function to create the pattern, and any related template files. Each pattern is responsible to creating a copy of itself, for example: get options from the command-line or user inputs; copy files and folders; and compile templates.
 
-A pattern folder should contain a `pattern.js`, which exports a generator function, and any template files. To simplify the scaffolding process, the generator function is provided with a set of utilities: [`inquirer`](https://github.com/SBoudrias/Inquirer.js),  [`handlebars`](https://github.com/wycats/handlebars.js), [`shell`](https://github.com/shelljs/shelljs), and [`chalk`](https://github.com/chalk/chalk).
+To simplify the scaffolding process, the pattern generator function is provided with a set of utilities: [`inquirer`](https://github.com/SBoudrias/Inquirer.js),  [`handlebars`](https://github.com/wycats/handlebars.js), [`shell`](https://github.com/shelljs/shelljs), and [`chalk`](https://github.com/chalk/chalk).
 
 This tool is inspired by [`plop`](https://github.com/amwmedia/plop).
 
@@ -52,7 +52,7 @@ In the `.patterns` folder, there can be one or more pattern folders. These can b
 - Each pattern folder contains `pattern.js` and any template files
   - Any folder that doesn't have `pattern.js` will be ignored
 
-The job of `pattern.js` is to create a copy of the pattern to its destination. It should export a generator function that receives a config object.
+The job of `pattern.js` is to create a copy of the pattern to its destination. It should export a function that receives a config object.
 
 ```js
 function pattern(config) {
@@ -73,7 +73,7 @@ If the function has a `description` property, it will be displayed when selectin
 
 #### Config object
 
-The generator function is provided with a set of properties and utility methods.
+The pattern generator function is provided with a set of properties and utility methods.
 
 - `src` - Source path: the path of the pattern folder
 - `dest` - Destination path: current working folder
@@ -88,8 +88,8 @@ The generator function is provided with a set of properties and utility methods.
 
 The following is a basic example of `pattern.js`.
 
-- Get app name and message using `inquirer`
-- Compile a template with `handlebars`
+- Get app name and message using `inquirer.prompt`
+- Compile a template with `handlebars.compile`
 - Create app folder with `shell.mkdir`
 - Write rendered template
 
@@ -101,11 +101,7 @@ function pattern(config) {
 
   const { src, dest, inquirer, handlebars, shell, error } = config
 
-  const { prompt } = inquirer
-  const { compile } = handlebars
-  const { mkdir } = shell
-
-  prompt([{
+  inquirer.prompt([{
     type: 'input',
     name: 'name',
     default: 'app',
@@ -125,12 +121,13 @@ function pattern(config) {
 
     const srcFile = path.join(src, 'example.js')
     const template = fs.readFileSync(srcFile, 'utf8')
-    const content = compile(template)({ message })
+
+    const content = handlebars.compile(template)({ message })
 
     const destPath = path.join(dest, name)
     const destFile = path.join(destPath, 'example.js')
 
-    mkdir('-p', destPath)
+    shell.mkdir('-p', destPath)
 
     fs.writeFileSync(destFile, content)
 
@@ -174,9 +171,7 @@ function pattern(config) {
 
   const { src, dest, argv, inquirer, error } = config
 
-  const { prompt } = inquirer
-
-  prompt([{
+  inquirer.prompt([{
     type: 'input',
     name: 'name',
     default: 'app',
@@ -230,7 +225,7 @@ function pattern(config) {
 
     // ------------ npm install ------------
 
-    return prompt([{
+    return inquirer.prompt([{
       type: 'confirm', name: 'install', default: false, message: 'Install NPM modules?'
     }])
 
