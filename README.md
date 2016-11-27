@@ -173,6 +173,7 @@ The following is an advanced example of `pattern.js`.
 - Take user input for the app name and description
 - If the destination exists, display error and quit
 - Copy all files in the pattern folder to its destination, using `rsync`
+  - Ignore `pattern.js` itself, and everything in `.gitignore`
 - Replace name and description in `package.json`
 - Finally, it confirms to run `git init` and `npm install`
 
@@ -185,7 +186,7 @@ const path = require('path')
 function pattern(config) {
 
   const {
-    src, dest, argv, prompt, error, chalk, writeJsonFile
+    src, dest, argv, prompt, error, chalk, writeJsonFile, quit
   } = config
 
   let name, destPath
@@ -200,10 +201,7 @@ function pattern(config) {
           return 'App name is required'
         }
       },
-      {
-        name: 'description', default: '',
-        message: 'Description'
-      }
+      { name: 'description', default: '', message: 'Description' }
     ]),
 
     data => {
