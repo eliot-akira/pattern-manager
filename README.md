@@ -116,9 +116,7 @@ const path = require('path')
 
 function pattern(config) {
 
-  const { src, dest, prompt, shell, compileFile } = config
-
-  const { mkdir } = shell
+  const { src, dest, prompt, compileFile } = config
 
   return [
     () => prompt([
